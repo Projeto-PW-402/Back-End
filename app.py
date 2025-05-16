@@ -8,6 +8,8 @@ app = Flask(__name__)
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
 ALLOWED_FILE_EXTENSIONS = {'.pdf', '.word', '.txt'}
 
+UPLOAD_FOLDER_URL = "static/uploads/"
+
 class User:
     def __init__(self):
         self.id = 0
@@ -29,7 +31,7 @@ class Material:
         self.quant = ""
         self.preco = ""
 
-class Ocorrencia:
+class Auditoria:
     def __init__(self):
         self.id = 0
         self.nome = ""
@@ -48,12 +50,12 @@ class Ocorrencia:
 # Fazer funcao para ver o ultimo id no array
 user_id = 0
 material_id = 0
-ocorrencia_id = 0
+auditoria_id = 0
 
 userList = []
 materialList = []
 auditoriasList = []
-ocorrenciaList = []
+auditoriaList = []
 
 def get_last_user_id():
     global user_id
@@ -67,12 +69,12 @@ def get_last_material_id():
         material_id = materialList[-1]['id'] + 1
     else:
         material_id = 0
-def get_last_ocorrencia_id():
-    global ocorrencia_id
-    if len(ocorrenciaList) > 0:
-        ocorrencia_id = ocorrenciaList[-1]['id'] + 1
+def get_last_auditoria_id():
+    global auditoria_id
+    if len(auditoriaList) > 0:
+        auditoria_id = auditoriaList[-1]['id'] + 1
     else:
-        ocorrencia_id = 0        
+        auditoria_id = 0        
 
 
 
@@ -81,7 +83,7 @@ def home():
     return "😁"
 
 
-@app.route('/addUser', methods=['POST'])
+@app.route('/user/add', methods=['POST'])
 def add_user():
     global user_id
     data = request.get_json()
@@ -106,14 +108,14 @@ def add_user():
 
     return jsonify({"message": "User added successfully", "user": user.__dict__}), 201
 
-@app.route('/getUsers', methods=['GET'])
+@app.route('/user/get', methods=['GET'])
 def get_users():
     if len(userList) == 0:
         return jsonify({"message": "No users found"}), 404
     
     return jsonify(userList), 200
 
-@app.route('/getUser/<int:user_id>', methods=['GET'])
+@app.route('/user/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     global userList
     for user in userList:
@@ -121,7 +123,7 @@ def get_user(user_id):
             return jsonify(user), 200
     return jsonify({"message": "User not found"}), 404
 
-@app.route('/addMaterial', methods=['POST'])
+@app.route('/material/add', methods=['POST'])
 def add_material():
     global material_id
     data = request.get_json()
@@ -144,14 +146,14 @@ def add_material():
 
     return jsonify({"message": "Material added successfully", "user": material.__dict__}), 201
 
-@app.route('/getMaterials', methods=['GET'])
+@app.route('/material/get', methods=['GET'])
 def get_materials():
     if len(materialList) == 0:
         return jsonify({"message": "No materials found"}), 404
     
     return jsonify(materialList), 200
 
-@app.route('/getMaterial/<int:material_id>', methods=['GET'])
+@app.route('/material/<int:material_id>', methods=['GET'])
 def get_material(material_id):
     global materialList
     for material in materialList:
@@ -159,9 +161,9 @@ def get_material(material_id):
             return jsonify(material), 200
     return jsonify({"message": "Material not found"}), 404
 
-@app.route('/upload', methods=['POST'])
+@app.route('/auditoria/upload', methods=['POST'])
 def upload():
-    global ocorrenciaList, ocorrencia_id
+    global auditoriaList, auditoria_id
     json_str = request.form.get('json_data')
     if not json_str:
         return {"error": "json_data não enviado"}, 400
@@ -172,8 +174,8 @@ def upload():
         return {"error": "JSON inválido"}, 400
 
     date = datetime.datetime.now().strftime("%d-%m-%Y  %H-%M-%S")
-    folder_name = f"{ocorrencia_id} [{date}]"
-    pasta_destino = os.path.join("uploads", folder_name)
+    folder_name = f"{auditoria_id} [{date}]"
+    pasta_destino = os.path.join(UPLOAD_FOLDER_URL, folder_name)
     os.makedirs(pasta_destino, exist_ok=True)  # Garante que a pasta existe
 
     # Aceder aos ficheiros enviados
@@ -190,22 +192,24 @@ def upload():
         if is_allowed_image(ficheiro.filename):
             imagens_guardadas.append(f"{folder_name}/{ficheiro.filename}")
 
-    ocorrencia = Ocorrencia()
-    ocorrencia.id = ocorrencia_id
-    ocorrencia.nome = data["nome"]
-    ocorrencia.tipo = data["tipo"]
-    ocorrencia.descricao = data["descricao"]
-    ocorrencia.images = imagens_guardadas
-    ocorrencia.files = ficheiros_guardados
-    ocorrencia.dnome = data["dnome"]
-    ocorrencia.dnif = data["dnif"]
-    ocorrencia.dcontacto = data["dcontacto"]
-    ocorrencia.demail = data["demail"]
-    ocorrencia.location = data["location"]
+    auditoria = Auditoria()
+    auditoria.id = auditoria_id
+    auditoria.nome = data["nome"]
+    auditoria.tipo = data["tipo"]
+    auditoria.descricao = data["descricao"]
+    auditoria.images = imagens_guardadas
+    auditoria.files = ficheiros_guardados
+    auditoria.dnome = data["dnome"]
+    auditoria.dnif = data["dnif"]
+    auditoria.dcontacto = data["dcontacto"]
+    auditoria.demail = data["demail"]
+    auditoria.location = data["location"]
 
 
-    ocorrenciaList.append(ocorrencia.__dict__)
-    ocorrencia_id += 1
+    auditoriaList.append(auditoria.__dict__)
+    auditoria_id += 1
+
+    saveauditoriaData()
 
     return {
         "mensagem": "Recebido com sucesso!",
@@ -214,6 +218,36 @@ def upload():
         "imagens": imagens_guardadas,
     }, 200
 
+@app.route('/auditoria/get', methods=['GET'])
+def get_auditorias():
+    global auditoriaList
+    if len(auditoriaList) == 0:
+        return jsonify({"message": "No auditorias found"}), 404
+    
+    return jsonify(auditoriaList), 200
+
+@app.route('/auditoria/<int:auditoria_id>', methods=['GET'])
+def get_auditoria(auditoria_id):
+    global auditoriaList
+    for auditoria in auditoriaList:
+        if auditoria['id'] == auditoria_id:
+            return jsonify(auditoria), 200
+    return jsonify({"message": "Auditoria not found"}), 404
+
+
+@app.route('/auditoria/edit/<int:id>', methods=['PUT'])
+def edit_auditoria(id):
+    global auditoriaList
+
+    data = request.get_json()
+    if data == None:
+        return jsonify({"error": "No data provided"}), 400
+    for auditoria in auditoriaList:
+        if auditoria['id'] == id:
+            auditoria['status'] = data.get('status')
+            saveauditoriaData()
+            return jsonify({"message": "Ocorrência updated successfully", "auditoria": auditoria}), 200
+    return jsonify({"message": "Ocorrência not found"}), 404
 
 def loadUserData():
     global userList
@@ -233,15 +267,15 @@ def loadMaterialData():
         materialList = []
     except json.JSONDecodeError:
         materialList = []
-def loadOcorrenciaData():
-    global materialList
+def loadauditoriaData():
+    global auditoriaList
     try:
-        with open("materials.json", "r", encoding="utf-8") as file:
-            materialList = json.load(file)
+        with open("auditorias.json", "r", encoding="utf-8") as file:
+            auditoriaList = json.load(file)
     except FileNotFoundError:
-        materialList = []
+        auditoriaList = []
     except json.JSONDecodeError:
-        materialList = []
+        auditoriaList = []
 
 def saveUserData():
     with open("users.json", "w", encoding="utf-8") as file:
@@ -255,9 +289,9 @@ def saveMaterialData():
 
     return jsonify({"message": "Data saved successfully"}), 200
 
-def saveOcorrenciaData():
-    with open("ocorrencias.json", "w", encoding="utf-8") as file:
-        json.dump(userList, file, indent=4)
+def saveauditoriaData():
+    with open("auditorias.json", "w", encoding="utf-8") as file:
+        json.dump(auditoriaList, file, indent=4)
 
     return jsonify({"message": "Data saved successfully"}), 200
 
@@ -271,4 +305,5 @@ def is_allowed_image(file):
 if __name__ == '__main__':
     loadUserData()
     loadMaterialData()
+    loadauditoriaData()
     app.run(debug=True)
