@@ -9,6 +9,7 @@ ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
 ALLOWED_FILE_EXTENSIONS = {'.pdf', '.word', '.txt'}
 
 UPLOAD_FOLDER_URL = "static/uploads/"
+LOCATION_FOLDER_URL = "static/location/"
 
 class User:
     def __init__(self):
@@ -19,7 +20,7 @@ class User:
         self.especialidade = ""
         self.email = ""
         self.telemovel = 0
-        self.listaAuditorias = ""
+        self.listaAuditorias = []
 
 
 class Material:
@@ -100,6 +101,22 @@ def add_user():
     user.telemovel = data.get('telemovel')
     user.listaAuditorias = data.get('listaAuditorias')
 
+    if not isinstance(user.listaAuditorias, list):
+        return jsonify({"error": "listaAuditorias must be a list"}), 400
+    if not isinstance(user.telemovel, int):
+        return jsonify({"error": "telemovel must be an integer"}), 400
+
+    if isinstance(user.dataNascimento, int):
+        user.dataNascimento = str(user.dataNascimento)
+
+    if isinstance(user.dataNascimento, str):
+        data = ''.join(filter(str.isdigit, user.dataNascimento))  # remove barras ou outros símbolos
+        if len(data) == 8:
+            user.dataNascimento = f"{data[0:2]}/{data[2:4]}/{data[4:8]}"
+        else:
+            return jsonify({"error": "dataNascimento deve ter 8 dígitos (ddmmaaaa ou dd/mm/aaaa)"}), 400
+
+        
     userList.append(user.__dict__)
 
     user_id += 1
@@ -121,6 +138,22 @@ def get_user(user_id):
     for user in userList:
         if user['id'] == user_id:
             return jsonify(user), 200
+    return jsonify({"message": "User not found"}), 404
+
+@app.route('/user/edit/<int:id>', methods=['PUT'])
+def edit_user(id):
+    global userList
+
+    data = request.get_json()
+    if data == None:
+        return jsonify({"error": "No data provided"}), 400
+    
+    for user in userList:
+        if user['id'] == id:
+            user['listaAuditorias'] = data.get('listaAuditorias')
+
+            saveUserData()
+            return jsonify({"message": "User updated successfully", "user": user}), 200
     return jsonify({"message": "User not found"}), 404
 
 @app.route('/material/add', methods=['POST'])
@@ -185,6 +218,8 @@ def upload():
 
 
     for nome, ficheiro in ficheiros.items():
+        if not ficheiro:
+            continue
         caminho = os.path.join(pasta_destino, ficheiro.filename)
         ficheiro.save(caminho)
         if is_allowed_file(ficheiro.filename):
@@ -249,6 +284,63 @@ def edit_auditoria(id):
             return jsonify({"message": "Ocorrência updated successfully", "auditoria": auditoria}), 200
     return jsonify({"message": "Ocorrência not found"}), 404
 
+
+#Backend PWA
+@app.route('/location/send', methods=['POST'])
+def send_location():
+    date = datetime.datetime.now().strftime("%d-%m-%Y - %H-%M-%S")
+    data = request.get_json()
+    if not data:
+        return "No data received", 400
+    if 'location'not in data or 'auditoria_id' not in data or 'user_id' not in data:
+        return "Missing Data", 400
+    
+    auditoria_id = data['auditoria_id']
+    user_id = data['user_id']
+    location = data['location']
+    
+    auditoria = Auditoria()
+    user = User()
+
+    auditoria = next((a for a in auditoriaList if a['id'] == auditoria_id), None)
+    user = next((u for u in userList if u['id'] == user_id), None)
+
+    info = {
+        "auditoria_id": auditoria_id,
+        "auditoria": auditoria['nome'],
+        "user_id": user_id,
+        "user": user['nome'],
+        "location": location,
+    }
+
+    folder_name = f"{auditoria['nome']}"
+    pasta_destino = os.path.join(LOCATION_FOLDER_URL, folder_name)
+    os.makedirs(pasta_destino, exist_ok=True)
+    caminho = os.path.join(pasta_destino, f"{user_id}.json")
+    with open(caminho, "w", encoding="utf-8") as file:
+        json.dump(info, file, indent=4,ensure_ascii=False)
+    
+    return jsonify({"message": "Location sent successfully", "info": info}), 200
+
+@app.route('/auditoria/users', methods=['GET'])
+def get_users_auditoria():
+    global userList
+    auditoria_id = request.args.get('auditoria_id')
+    if not auditoria_id:
+        return jsonify({"error": "No auditoria_id provided"}), 400
+
+    if len(userList) == 0:
+        return jsonify({"message": "No users found"}), 404
+    users = []
+    for user in userList:
+        for auditoria in user['listaAuditorias']:
+            if auditoria == int(auditoria_id):
+                users.append(user)
+                break
+    return jsonify(users), 200
+
+#File Management
+#Load Data
 def loadUserData():
     global userList
     try:
@@ -276,7 +368,7 @@ def loadauditoriaData():
         auditoriaList = []
     except json.JSONDecodeError:
         auditoriaList = []
-
+#Save Data
 def saveUserData():
     with open("users.json", "w", encoding="utf-8") as file:
         json.dump(userList, file, indent=4)
