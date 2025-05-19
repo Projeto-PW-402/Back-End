@@ -1,8 +1,10 @@
 import datetime
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Importe o CORS
 import json
 app = Flask(__name__)
+CORS(app)  # Ativar o CORS para todas as rotas
 # !ricardoPW402
 
 ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
