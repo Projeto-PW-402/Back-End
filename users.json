@@ -1,0 +1,32 @@
+[
+    {
+        "id": 0,
+        "nome": null,
+        "morada": "rua doutor professor carlos",
+        "dataNascimento": "27/01/2004",
+        "especialidade": "professor",
+        "email": "luispedrofg22@gmail.com",
+        "telemovel": 917377601,
+        "listaAuditorias": []
+    },
+    {
+        "id": 1,
+        "nome": null,
+        "morada": "rua doutor professor carlos",
+        "dataNascimento": "27/01/2004",
+        "especialidade": "professor",
+        "email": "luispedrofg22@gmail.com",
+        "telemovel": 917377601,
+        "listaAuditorias": []
+    },
+    {
+        "id": 0,
+        "nome": "Luis Pedro Fernandes",
+        "morada": "rua doutor professor carlos",
+        "dataNascimento": "27/01/2004",
+        "especialidade": "professor",
+        "email": "luispedrofg22@gmail.com",
+        "telemovel": 917377601,
+        "listaAuditorias": []
+    }
+]

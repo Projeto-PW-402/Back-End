@@ -95,7 +95,7 @@ def add_user():
         return jsonify({"error": "No data provided"}), 400
 
     user.id = user_id
-    user.nome = data.get('name')
+    user.nome = data.get('nome')
     user.morada = data.get('morada')    
     user.dataNascimento = data.get('dataNascimento')
     user.especialidade = data.get('especialidade')
