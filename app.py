@@ -95,7 +95,7 @@ def add_user():
         return jsonify({"error": "No data provided"}), 400
 
     user.id = user_id
-    user.nome = data.get('name')
+    user.nome = data.get('nome')
     user.morada = data.get('morada')    
     user.dataNascimento = data.get('dataNascimento')
     user.especialidade = data.get('especialidade')
@@ -105,8 +105,8 @@ def add_user():
 
     if not isinstance(user.listaAuditorias, list):
         return jsonify({"error": "listaAuditorias must be a list"}), 400
-    if not isinstance(user.telemovel, int):
-        return jsonify({"error": "telemovel must be an integer"}), 400
+    # if not isinstance(user.telemovel, int):
+    #     return jsonify({"error": "telemovel must be an integer"}), 400
 
     if isinstance(user.dataNascimento, int):
         user.dataNascimento = str(user.dataNascimento)
@@ -124,13 +124,13 @@ def add_user():
     user_id += 1
 
     saveUserData()
-
+    print(user.__dict__)
     return jsonify({"message": "User added successfully", "user": user.__dict__}), 201
 
 @app.route('/user/get', methods=['GET'])
 def get_users():
     if len(userList) == 0:
-        return jsonify({"message": "No users found"}), 404
+        return jsonify({"message": "No users found",'data': userList}), 200
     
     return jsonify(userList), 200
 
@@ -156,6 +156,16 @@ def edit_user(id):
 
             saveUserData()
             return jsonify({"message": "User updated successfully", "user": user}), 200
+    return jsonify({"message": "User not found"}), 404
+
+@app.route('/user/delete/<int:id>', methods=['DELETE'])
+def delete_user(id):
+    global userList
+    for user in userList:
+        if user['id'] == id:
+            userList.remove(user)
+            saveUserData()
+            return jsonify({"message": "User deleted successfully"}), 200
     return jsonify({"message": "User not found"}), 404
 
 @app.route('/material/add', methods=['POST'])
