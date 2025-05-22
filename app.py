@@ -33,6 +33,7 @@ class Material:
         self.descricao = ""
         self.quant = ""
         self.preco = ""
+        self.visible = True
 
 class Auditoria:
     def __init__(self):
@@ -48,6 +49,8 @@ class Auditoria:
         self.demail = ""
         self.location = ""
         self.status = -1
+        self.date = ""
+        self.visible = True
 
 
 # Fazer funcao para ver o ultimo id no array
@@ -151,9 +154,10 @@ def edit_user(id):
         return jsonify({"error": "No data provided"}), 400
     
     for user in userList:
+        if user['listaAuditorias'] > 3:
+            return jsonify({"error": "User cant be in more Auditorias","Auditorias": user['listaAuditorias']}), 401
         if user['id'] == id:
             user['listaAuditorias'] = data.get('listaAuditorias')
-
             saveUserData()
             return jsonify({"message": "User updated successfully", "user": user}), 200
     return jsonify({"message": "User not found"}), 404
@@ -177,11 +181,12 @@ def add_material():
         return jsonify({"error": "No data provided"}), 400
 
     material.id = material_id
-    material.nome = data.get('name')
+    material.nome = data.get('nome')
     material.tipo = data.get('tipo')
     material.descricao = data.get('descricao')
     material.quant = data.get('quant')
     material.preco = data.get('preco')
+    material.visible = True
 
     materialList.append(material.__dict__)
 
@@ -204,6 +209,20 @@ def get_material(material_id):
     for material in materialList:
         if material['id'] == material_id:
             return jsonify(material), 200
+    return jsonify({"message": "Material not found"}), 404
+
+@app.route('/material/edit/<int:id>', methods=['PUT'])
+def edit_material(id):
+    global materialList
+
+    data = request.get_json()
+    if data == None:
+        return jsonify({"error": "No data provided"}), 400
+    for material in materialList:
+        if material['id'] == id:
+            material['status'] = data.get('status')
+            saveMaterialData()
+            return jsonify({"message": "Material updated successfully", "material": material}), 200
     return jsonify({"message": "Material not found"}), 404
 
 @app.route('/auditoria/upload', methods=['POST'])
@@ -251,6 +270,9 @@ def upload():
     auditoria.dcontacto = data["dcontacto"]
     auditoria.demail = data["demail"]
     auditoria.location = data["location"]
+    auditoria.date = str(date)
+    auditoria.visible = True
+
 
 
     auditoriaList.append(auditoria.__dict__)
@@ -260,7 +282,7 @@ def upload():
 
     return {
         "mensagem": "Recebido com sucesso!",
-        "dados": data,
+        "dados": auditoria.__dict__,
         "ficheiros": ficheiros_guardados,
         "imagens": imagens_guardadas,
     }, 200
