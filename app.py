@@ -57,6 +57,7 @@ class Auditoria:
 user_id = 0
 material_id = 0
 auditoria_id = 0
+material_id = 0
 
 userList = []
 materialList = []
@@ -190,18 +191,24 @@ def add_material():
 
     materialList.append(material.__dict__)
 
+    print(materialList)
     material_id += 1
 
     saveMaterialData()
 
-    return jsonify({"message": "Material added successfully", "user": material.__dict__}), 201
+    return jsonify({"message": "Material added successfully", "Material": material.__dict__}), 201
 
 @app.route('/material/get', methods=['GET'])
 def get_materials():
+    global materialList
+    visibleList = []
     if len(materialList) == 0:
         return jsonify({"message": "No materials found"}), 404
-    
-    return jsonify(materialList), 200
+    else:
+        for material in materialList:
+            if material['visible'] == True:
+                visibleList.append(material)
+    return jsonify(visibleList), 200
 
 @app.route('/material/<int:material_id>', methods=['GET'])
 def get_material(material_id):
@@ -220,7 +227,8 @@ def edit_material(id):
         return jsonify({"error": "No data provided"}), 400
     for material in materialList:
         if material['id'] == id:
-            material['status'] = data.get('status')
+            material['visible'] = data.get('visible')
+            print(material['visible'])
             saveMaterialData()
             return jsonify({"message": "Material updated successfully", "material": material}), 200
     return jsonify({"message": "Material not found"}), 404
@@ -411,7 +419,7 @@ def saveUserData():
 
 def saveMaterialData():
     with open("materials.json", "w", encoding="utf-8") as file:
-        json.dump(userList, file, indent=4)
+        json.dump(materialList, file, indent=4)
 
     return jsonify({"message": "Data saved successfully"}), 200
 
