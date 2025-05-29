@@ -105,7 +105,7 @@ def add_user():
     user.especialidade = data.get('especialidade')
     user.email = data.get('email')
     user.telemovel = data.get('telemovel')
-    user.listaAuditorias = data.get('listaAuditorias')
+    user.listaAuditorias = []
 
     if not isinstance(user.listaAuditorias, list):
         return jsonify({"error": "listaAuditorias must be a list"}), 400
@@ -146,6 +146,18 @@ def get_user(user_id):
             return jsonify(user), 200
     return jsonify({"message": "User not found"}), 404
 
+@app.route('/user', methods=['GET'])
+def get_user_by_email():
+    email = request.args.get('email')
+    if not email:
+        return jsonify({"error": "No email provided"}), 400
+    global userList
+    for user in userList:
+        if user['email'] == email:
+            return jsonify(user), 200
+    return jsonify({"message": "User not found"}), 404
+
+
 @app.route('/user/edit/<int:id>', methods=['PUT'])
 def edit_user(id):
     global userList
@@ -172,6 +184,29 @@ def delete_user(id):
             saveUserData()
             return jsonify({"message": "User deleted successfully"}), 200
     return jsonify({"message": "User not found"}), 404
+
+#so para teste
+@app.route('/users/auditorias', methods=['GET'])
+def get_auditorias_por_user():
+    global userList
+    user_id = request.args.get('user_id')  # ou outro identificador
+    auditoriasLista = []
+    if not user_id:
+        return jsonify({"error": "No user_id provided"}), 400
+
+    for user in userList:
+        if str(user['id']) == str(user_id):  # compara com o campo que usares
+            auditoriasLista = user['listaAuditorias']
+
+    if not auditoriasLista:
+        return jsonify({"message": "No auditorias found for user"}), 404
+    response = []
+    for auditorias in auditoriaList:
+        if auditorias['id'] in auditoriasLista:
+            response.append(auditorias)
+    if not response:
+        return jsonify({"message": "No auditorias found for user"}), 404
+    return jsonify(response), 200
 
 @app.route('/material/add', methods=['POST'])
 def add_material():
