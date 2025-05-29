@@ -397,6 +397,7 @@ def send_location():
     with open(caminho, "w", encoding="utf-8") as file:
         json.dump(info, file, indent=4,ensure_ascii=False)
     
+    print(f"Location saved for user {user_id} in auditoria {auditoria_id} at {caminho}")
     return jsonify({"message": "Location sent successfully", "info": info}), 200
 
 @app.route('/auditoria/users', methods=['GET'])
