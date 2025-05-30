@@ -23,6 +23,7 @@ class User:
         self.email = ""
         self.telemovel = 0
         self.listaAuditorias = []
+        self.allowed = True
 
 
 class Material:
@@ -43,12 +44,13 @@ class Auditoria:
         self.descricao = ""
         self.images = []
         self.files = []
+        self.materiais = []
         self.dnome = ""
         self.dnif = ""
         self.dcontacto = ""
         self.demail = ""
         self.location = ""
-        self.status = -1
+        self.status = 0
         self.date = ""
         self.visible = True
 
@@ -106,6 +108,7 @@ def add_user():
     user.email = data.get('email')
     user.telemovel = data.get('telemovel')
     user.listaAuditorias = []
+    user.allowed = True
 
     if not isinstance(user.listaAuditorias, list):
         return jsonify({"error": "listaAuditorias must be a list"}), 400
@@ -161,16 +164,46 @@ def get_user_by_email():
 @app.route('/user/edit/<int:id>', methods=['PUT'])
 def edit_user(id):
     global userList
+    counter = 0
 
     data = request.get_json()
     if data == None:
         return jsonify({"error": "No data provided"}), 400
     
     for user in userList:
-        if user['listaAuditorias'] > 3:
+        if user['allowed'] == False:
             return jsonify({"error": "User cant be in more Auditorias","Auditorias": user['listaAuditorias']}), 401
         if user['id'] == id:
-            user['listaAuditorias'] = data.get('listaAuditorias')
+            lista = data.get('listaAuditorias', [])
+            auditoria = []
+            vistos = set()
+
+            for numero in lista + user['listaAuditorias']:
+                if numero not in vistos:
+                    vistos.add(numero)
+            for numero in vistos:
+                if numero in user['listaAuditorias']:
+                    continue
+                else:
+                    auditoria.append(numero)
+            
+            print(auditoria)
+            if auditoria == []:
+                return jsonify({"message": "Utiliador ja presente a essa auditoria", "user": user}), 401
+            
+            for userAuditoria in user['listaAuditorias']:
+                for a in auditoriasList:
+                    if a['id'] == userAuditoria:
+                        if a['status'] == 1:
+                            counter += 1
+                        if counter == 3:
+                            user['allowed'] = False
+                            return jsonify({"message": "Utiliador ja presente em 3 auditorias", "user": user}), 401
+                        elif counter == 2:
+                            user['allowed'] = False
+                        else:
+                            user['allowed'] = True
+            user['listaAuditorias'].append(auditoria[0])    
             saveUserData()
             return jsonify({"message": "User updated successfully", "user": user}), 200
     return jsonify({"message": "User not found"}), 404
@@ -263,7 +296,7 @@ def edit_material(id):
     for material in materialList:
         if material['id'] == id:
             material['visible'] = data.get('visible')
-            print(material['visible'])
+            material['quant'] = data.get('quant')
             saveMaterialData()
             return jsonify({"message": "Material updated successfully", "material": material}), 200
     return jsonify({"message": "Material not found"}), 404
@@ -308,6 +341,7 @@ def upload():
     auditoria.descricao = data["descricao"]
     auditoria.images = imagens_guardadas
     auditoria.files = ficheiros_guardados
+    auditoria.materiais = []
     auditoria.dnome = data["dnome"]
     auditoria.dnif = data["dnif"]
     auditoria.dcontacto = data["dcontacto"]
@@ -354,11 +388,11 @@ def edit_auditoria(id):
     data = request.get_json()
     if data == None:
         return jsonify({"error": "No data provided"}), 400
-    for auditoria in auditoriaList:
+    for i, auditoria in enumerate(auditoriaList):
         if auditoria['id'] == id:
-            auditoria['status'] = data.get('status')
+            auditoriaList[i] = data
             saveauditoriaData()
-            return jsonify({"message": "Ocorrência updated successfully", "auditoria": auditoria}), 200
+            return jsonify({"message": "Ocorrência updated successfully", "auditoria": auditoria}), 200    
     return jsonify({"message": "Ocorrência not found"}), 404
 
 
@@ -462,7 +496,6 @@ def saveMaterialData():
 def saveauditoriaData():
     with open("auditorias.json", "w", encoding="utf-8") as file:
         json.dump(auditoriaList, file, indent=4)
-
     return jsonify({"message": "Data saved successfully"}), 200
 
 def is_allowed_file(file):
