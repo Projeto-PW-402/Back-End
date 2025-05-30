@@ -1,5 +1,6 @@
 import datetime
 import os
+from fpdf import FPDF
 from flask import Flask, request, jsonify
 from flask_cors import CORS  # Importe o CORS
 import json
@@ -452,6 +453,97 @@ def get_users_auditoria():
     return jsonify(users), 200
 
 #File Management
+@app.route('/auditoria/generate', methods=['GET'])
+def gerar_pdf():
+    request_id = request.args.get('id')
+    if request_id is not None:
+        request_id = int(request_id)
+
+    auditoria = None
+    for i,a in enumerate(auditoriaList,0):
+        if request_id == a['id']:
+            auditoria = auditoriaList[i]
+            break
+        
+    if auditoria == None:
+        return jsonify({"message": "No auditoria found"}), 404
+    
+    listaMateriaisUsados = []
+
+    for m in materialList:
+        for usado in auditoria.get('materiais', []):
+            if usado['id'] == m['id']:
+                listaMateriaisUsados.append({
+                    'nome': m['nome'],
+                    'quantidade': usado['quantidade']
+                })
+
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Courier", 'B', size=24)
+
+    pdf.set_title(f"Auditoria {auditoria['id']}")
+    pdf.cell(200, 10, txt=f"Relatório da Auditoria {auditoria['id']}", ln=True, align="C")
+    
+    pdf.ln(10)
+    pdf.set_font("Courier", 'B', 14)
+    pdf.cell(200, 10, txt="Info", ln=True)
+    pdf.set_font("Courier", size=12)
+    pdf.cell(200, 10, txt=f"Nome: {auditoria['nome']}", ln=True)
+    pdf.cell(200, 10, txt=f"Tipo: {auditoria['tipo']}", ln=True)
+    pdf.multi_cell(0, 10, txt=f"Descrição: {auditoria['descricao']}")
+    pdf.cell(200, 10, txt=f"Localização: {auditoria['location']}", ln=True)
+    pdf.cell(200, 10, txt=f"Data: {auditoria['date']}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Courier", 'B', 14)
+    pdf.cell(200, 10, txt="Responsável", ln=True)
+    pdf.set_font("Courier", size=12)
+    pdf.cell(200, 10, txt=f"Nome: {auditoria['dnome']}", ln=True)
+    pdf.cell(200, 10, txt=f"NIF: {auditoria['dnif']}", ln=True)
+    pdf.cell(200, 10, txt=f"Contacto: {auditoria['dcontacto']}", ln=True)
+    pdf.cell(200, 10, txt=f"Email: {auditoria['demail']}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Courier", 'B', 14)
+    pdf.cell(200, 10, txt="Materiais Utilizados", ln=True)
+    pdf.set_font("Courier", size=12)
+    for mat in listaMateriaisUsados:
+        nome = mat.get('nome', 'Sem nome')
+        quantidade = mat.get('quantidade', 0)
+        pdf.cell(200, 10, txt=f"- {nome} (Quantidade: {quantidade})", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Courier", 'B', 14)
+    pdf.cell(200, 10, txt="Imagens", ln=True)
+    pdf.set_font("Courier", size=12)
+
+    # Se quiseres adicionar imagens (assumindo que paths são válidos):
+    base_dir = "static/uploads"
+
+    for img_rel_path in auditoria.get('images', []):
+        img_path = os.path.join(base_dir, img_rel_path)
+
+        if os.path.exists(img_path):
+            try:
+                pdf.image(img_path, w=100)
+                pdf.ln(5)
+            except Exception as e:
+                pdf.cell(200, 10, txt=f"(Erro ao carregar imagem: {img_rel_path})", ln=True)
+        else:
+            pdf.cell(200, 10, txt=f"(Imagem não encontrada: {img_rel_path})", ln=True)
+
+    output_dir = "static/files"
+    os.makedirs(output_dir, exist_ok=True)  # Cria a pasta se não existir
+
+    # Caminho completo do ficheiro
+    output_path = os.path.join(output_dir, f"relatorio_auditoria_{auditoria['id']}.pdf")
+
+    # Gerar o PDF
+    pdf.output(output_path)
+    print(f"PDF gerado: ")
+    return jsonify({"message": "PDF gerado"}), 200
+
 #Load Data
 def loadUserData():
     global userList
