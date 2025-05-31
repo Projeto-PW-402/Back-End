@@ -264,7 +264,7 @@ def send_notification(id):
             return jsonify({"message": "User deleted successfully"}), 200
     return jsonify({"message": "User not found"}), 404
 @app.route('/user/notification/get', methods=['GET'])
-def get_notification(id):
+def get_notification():
     global userList
     id = request.args.get('id')
     for user in userList:
