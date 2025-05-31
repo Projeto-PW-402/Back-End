@@ -4,7 +4,7 @@
         "nome": "Parafuso de A\u00e7o",
         "tipo": "Ferramenta",
         "descricao": "Parafuso de a\u00e7o inoxid\u00e1vel de 10mm",
-        "quant": 115,
+        "quant": 9986,
         "preco": 0.15,
         "visible": true
     },
@@ -13,7 +13,7 @@
         "nome": "Parafuso de A\u00e7o 2",
         "tipo": "Ferramenta",
         "descricao": "Parafuso de a\u00e7o inoxid\u00e1vel de 10mm",
-        "quant": 102,
+        "quant": 99999,
         "preco": 0.15,
         "visible": true
     }

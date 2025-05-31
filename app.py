@@ -53,6 +53,8 @@ class Auditoria:
         self.location = ""
         self.status = 0
         self.date = ""
+        self.lat = ""
+        self.lng = ""
         self.visible = True
 
 
@@ -66,6 +68,12 @@ userList = []
 materialList = []
 auditoriasList = []
 auditoriaList = []
+adminList = [
+    {
+        'email': 'ricardojsilva366@gmail.com',
+        'nome': 'Ricardo'
+    }
+]
 
 def get_last_user_id():
     global user_id
@@ -101,6 +109,7 @@ def add_user():
     if data == None:
         return jsonify({"error": "No data provided"}), 400
 
+    get_last_user_id()
     user.id = user_id
     user.nome = data.get('nome')
     user.morada = data.get('morada')    
@@ -155,8 +164,8 @@ def get_user_by_email():
     email = request.args.get('email')
     if not email:
         return jsonify({"error": "No email provided"}), 400
-    global userList
-    for user in userList:
+    global adminList
+    for user in adminList:
         if user['email'] == email:
             return jsonify(user), 200
     return jsonify({"message": "User not found"}), 404
@@ -249,7 +258,7 @@ def add_material():
     material = Material()
     if data == None:
         return jsonify({"error": "No data provided"}), 400
-
+    get_last_material_id()
     material.id = material_id
     material.nome = data.get('nome')
     material.tipo = data.get('tipo')
@@ -334,7 +343,7 @@ def upload():
             ficheiros_guardados.append(f"{folder_name}/{ficheiro.filename}")
         if is_allowed_image(ficheiro.filename):
             imagens_guardadas.append(f"{folder_name}/{ficheiro.filename}")
-
+    get_last_auditoria_id()
     auditoria = Auditoria()
     auditoria.id = auditoria_id
     auditoria.nome = data["nome"]
@@ -348,6 +357,8 @@ def upload():
     auditoria.dcontacto = data["dcontacto"]
     auditoria.demail = data["demail"]
     auditoria.location = data["location"]
+    auditoria.lat = data["lat"]
+    auditoria.lng = data["lng"]
     auditoria.date = str(date)
     auditoria.visible = True
 
