@@ -26,6 +26,7 @@ class User:
         self.telemovel = 0
         self.listaAuditorias = []
         self.allowed = True
+        self.notify = False
 
 
 class Material:
@@ -131,6 +132,7 @@ def add_user():
     user.telemovel = data.get('telemovel')
     user.listaAuditorias = []
     user.allowed = True
+    user.notify = False
 
     if not isinstance(user.listaAuditorias, list):
         return jsonify({"error": "listaAuditorias must be a list"}), 400
@@ -175,12 +177,12 @@ def get_user(user_id):
 def get_user_by_email():
     email = request.args.get('email')
     if not email:
-        return jsonify({"error": "No email provided"}), 400
+        return jsonify({"message": "No email provided","status": "Error"}), 200
     global adminList
     for user in adminList:
         if user['email'] == email:
             return jsonify(user), 200
-    return jsonify({"message": "User not found"}), 404
+    return jsonify({"message": "User not found","status": "Error"}), 200
 
 @app.route('/pwa/login', methods=['POST'])
 def pwa_login():
@@ -248,6 +250,16 @@ def delete_user(id):
     for user in userList:
         if user['id'] == id:
             userList.remove(user)
+            saveUserData()
+            return jsonify({"message": "User deleted successfully"}), 200
+    return jsonify({"message": "User not found"}), 404
+
+@app.route('/user/notify', methods=['POST'])
+def delete_user(id):
+    global userList
+    for user in userList:
+        if user['id'] == id:
+            user['notify'] = True
             saveUserData()
             return jsonify({"message": "User deleted successfully"}), 200
     return jsonify({"message": "User not found"}), 404
@@ -452,6 +464,8 @@ def send_location():
 
     auditoria = next((a for a in auditoriaList if a['id'] == auditoria_id), None)
     user = next((u for u in userList if u['id'] == user_id), None)
+
+    user['notify'] = False
 
     info = {
         "auditoria_id": auditoria_id,
