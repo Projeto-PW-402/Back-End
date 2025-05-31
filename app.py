@@ -254,7 +254,7 @@ def delete_user(id):
             return jsonify({"message": "User deleted successfully"}), 200
     return jsonify({"message": "User not found"}), 404
 
-@app.route('/user/notify', methods=['POST'])
+@app.route('/user/notification/send', methods=['POST'])
 def delete_user(id):
     global userList
     for user in userList:
@@ -262,6 +262,16 @@ def delete_user(id):
             user['notify'] = True
             saveUserData()
             return jsonify({"message": "User deleted successfully"}), 200
+    return jsonify({"message": "User not found"}), 404
+@app.route('/user/notification/get', methods=['GET'])
+def delete_user(id):
+    global userList
+    id = request.args.get('id')
+    for user in userList:
+        if user['id'] == id and user['notify'] == True:
+            return jsonify({"message": "Send Location"}), 200
+        else:
+            return jsonify({"message": "No need to send "}), 201
     return jsonify({"message": "User not found"}), 404
 
 #so para teste
