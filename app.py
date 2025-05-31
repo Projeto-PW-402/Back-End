@@ -181,7 +181,7 @@ def get_user_by_email():
             return jsonify(user), 200
     return jsonify({"message": "User not found"}), 404
 
-@app.route('/pwa/login', methods=['GET'])
+@app.route('/pwa/login', methods=['POST'])
 def pwa_login():
     data = request.get_json()
     if not data['email']:
