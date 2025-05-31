@@ -186,10 +186,11 @@ def get_user_by_email():
 
 @app.route('/pwa/login', methods=['POST'])
 def pwa_login():
+    global userList
     data = request.get_json()
     if not data['email']:
         return jsonify({"error": "No email provided"}), 400
-    global userList
+
     for user in userList:
         if user['email'] == data['email']:
             return jsonify(user), 200
