@@ -12,6 +12,7 @@ ALLOWED_IMAGE_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
 ALLOWED_FILE_EXTENSIONS = {'.pdf', '.word', '.txt'}
 
 UPLOAD_FOLDER_URL = "static/uploads/"
+PWA_UPLOAD_FOLDER_URL = "static/PWA/"
 LOCATION_FOLDER_URL = "static/location/"
 
 class User:
@@ -56,6 +57,16 @@ class Auditoria:
         self.lat = ""
         self.lng = ""
         self.visible = True
+
+class Informacao:
+    def __init__(self):
+        self.auditoria_id = 0
+        self.user_id = 0
+        self.titulo = ''
+        self.tipo = ''
+        self.descricao = ''
+        self.imagens = []
+
 
 
 # Fazer funcao para ver o ultimo id no array
@@ -445,6 +456,75 @@ def send_location():
     
     print(f"Location saved for user {user_id} in auditoria {auditoria_id} at {caminho}")
     return jsonify({"message": "Location sent successfully", "info": info}), 200
+
+@app.route('/pwa/upload', methods=['POST'])
+def pwaUpload():
+    global auditoriaList, userList
+    json_str = request.form.get('json_data')
+    if not json_str:
+        return {"error": "json_data não enviado"}, 400
+
+    try:
+        data = json.loads(json_str)
+    except json.JSONDecodeError:
+        return {"error": "JSON inválido"}, 400
+    
+    user_id = data.get('user_id')
+    auditoria_id = data.get('auditoria_id')
+
+    user_exists = any(user['id'] == user_id for user in userList)
+    auditoria_exists = any(auditoria['id'] == auditoria_id for auditoria in auditoriaList)
+
+    if not user_exists:
+        return jsonify({"message": "User not Found"}), 404
+    
+    if not auditoria_exists:
+        return jsonify({"message": "Auditoria not Found"}), 404
+    
+
+    auditoria_id = data['auditoria_id']
+    user_id = data['user_id']
+
+    date = datetime.datetime.now().strftime("%d-%m-%Y  %H-%M-%S")
+    folder_name = os.path.join(str(auditoria_id), str(user_id))
+    pasta_destino = os.path.join(PWA_UPLOAD_FOLDER_URL, folder_name)
+
+    os.makedirs(pasta_destino, exist_ok=True) 
+
+    # Aceder aos ficheiros enviados
+    ficheiros = request.files
+    imagens_guardadas = []
+
+    for nome, ficheiro in ficheiros.items():
+        if not ficheiro:
+            continue
+        caminho = os.path.join(pasta_destino, ficheiro.filename)
+        ficheiro.save(caminho)
+        if is_allowed_image(ficheiro.filename):
+            # Caminho relativo para guardar no objeto (usado no frontend)
+            imagens_guardadas.append(f"{folder_name}/{ficheiro.filename}")
+
+    # Criar o objeto da auditoria
+    auditoria = Informacao()
+    auditoria.auditoria_id = auditoria_id
+    auditoria.user_id = user_id
+    auditoria.titulo = data.get('titulo')
+    auditoria.tipo = data.get('tipo')
+    auditoria.descricao = data.get('descricao')
+    auditoria.imagens = imagens_guardadas
+    
+    json_path = os.path.join(pasta_destino, f"report_{date}.json")
+
+    with open(json_path, "w", encoding="utf-8") as file:
+        json.dump(auditoria.__dict__, file, indent=4, ensure_ascii=False)
+
+    return {
+        "mensagem": "Recebido com sucesso!",
+        "dados": auditoria.__dict__,
+        "imagens": imagens_guardadas,
+    }, 200
+
+
 
 @app.route('/auditoria/users', methods=['GET'])
 def get_users_auditoria():
