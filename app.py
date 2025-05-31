@@ -255,8 +255,9 @@ def delete_user(id):
     return jsonify({"message": "User not found"}), 404
 
 @app.route('/user/notification/send', methods=['POST'])
-def send_notification(id):
+def send_notification():
     global userList
+    id = request.get_json()
     for user in userList:
         if user['id'] == id:
             user['notify'] = True
