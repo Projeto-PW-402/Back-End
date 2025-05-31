@@ -402,7 +402,7 @@ def upload():
     auditoria.images = imagens_guardadas
     auditoria.files = ficheiros_guardados
     auditoria.materiais = []
-    auditoria.risco = data["risco"]
+    auditoria.risco = 0
     auditoria.dnome = data["dnome"]
     auditoria.dnif = data["dnif"]
     auditoria.dcontacto = data["dcontacto"]
