@@ -350,14 +350,15 @@ def get_material(material_id):
 @app.route('/material/edit/<int:id>', methods=['PUT'])
 def edit_material(id):
     global materialList
-
     data = request.get_json()
+    print(data)
     if data == None:
         return jsonify({"error": "No data provided"}), 400
     for material in materialList:
         if material['id'] == id:
             material['visible'] = data.get('visible')
             material['quant'] = data.get('quant')
+            material['preco'] = data.get('preco')
             saveMaterialData()
             return jsonify({"message": "Material updated successfully", "material": material}), 200
     return jsonify({"message": "Material not found"}), 404
