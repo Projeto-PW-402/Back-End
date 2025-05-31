@@ -6,7 +6,7 @@
         "descricao": "Parafuso de a\u00e7o inoxid\u00e1vel de 10mm",
         "quant": 9970,
         "preco": 0.15,
-        "visible": true
+        "visible": false
     },
     {
         "id": 1,

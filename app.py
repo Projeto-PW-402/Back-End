@@ -259,7 +259,7 @@ def send_notification():
     global userList
     data = request.get_json()
     for user in userList:
-        if user['id'] == data.get('id'):
+        if user['id'] == data:
             user['notify'] = True
             saveUserData()
             return jsonify({"message": "Notification Sent"}), 200
