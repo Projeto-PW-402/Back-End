@@ -47,6 +47,7 @@ class Auditoria:
         self.images = []
         self.files = []
         self.materiais = []
+        self.risco = 0
         self.dnome = ""
         self.dnif = ""
         self.dcontacto = ""
@@ -375,6 +376,7 @@ def upload():
     auditoria.images = imagens_guardadas
     auditoria.files = ficheiros_guardados
     auditoria.materiais = []
+    auditoria.risco = data["risco"]
     auditoria.dnome = data["dnome"]
     auditoria.dnif = data["dnif"]
     auditoria.dcontacto = data["dcontacto"]
